@@ -109,47 +109,6 @@ AGRI-HUB/
 └── README.md                # Project documentation
 ```
 
-## 🚀 Quick Start
-
-### **Prerequisites**
-- Python 3.8 or higher
-- pip package manager
-- Git
-
-### **Installation**
-
-1. **Clone the repository**
-```bash
-git clone https://github.com/dhanushm18/end-to-end-agriculture-hub.git
-cd end-to-end-agriculture-hub
-```
-
-2. **Create virtual environment**
-```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
-
-3. **Install dependencies**
-```bash
-pip install -r requirements.txt
-```
-
-4. **Configure API keys**
-```python
-# Edit app/config.py
-weather_api_key = "your_openweathermap_api_key"
-google_ai_api_key = "your_google_gemini_api_key"
-```
-
-5. **Run the application**
-```bash
-cd app
-python app.py
-```
-
-6. **Access the application**
-Open your browser and navigate to `http://localhost:5000`
 
 ## 🔧 Configuration
 
