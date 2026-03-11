@@ -8,7 +8,7 @@ from utils.disease import disease_dic
 from utils.fertilizer import fertilizer_dic
 import requests
 import config
-import pickle
+import joblib
 import io
 import torch
 from torchvision import transforms
@@ -73,9 +73,7 @@ disease_model.eval()
 # Loading crop recommendation model
 print("Loading crop recommendation model...")
 crop_recommendation_model_path = 'models/RandomForest.pkl'
-crop_recommendation_model = pickle.load(
-    open(crop_recommendation_model_path, 'rb'))
-print("Crop recommendation model loaded successfully!")
+crop_recommendation_model = joblib.load("models/crop_recommendation_model.pkl")
 
 # Simple Chatbot Configuration
 print("Configuring simple agriculture chatbot...")
