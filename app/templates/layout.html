@@ -19,6 +19,7 @@
 	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 	<!-- AOS Animation Library -->
 	<link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 	<style>
 		:root {
@@ -845,11 +846,21 @@
 
 			<div class="chatbot-input">
 				<div class="input-group">
-					<input type="text" id="chatbot-input" class="form-control" placeholder="Ask me about farming, crops, diseases..." maxlength="500">
-					<button id="chatbot-send" class="btn btn-primary">
-						<i class="fas fa-paper-plane"></i>
-					</button>
-				</div>
+
+                   <!-- Voice Input Button -->
+                 <button id="chatbot-voice" class="btn btn-secondary">
+                  <i class="fas fa-microphone"></i>
+               </button>
+
+        <input type="text" id="chatbot-input" class="form-control"
+        placeholder="Ask me about farming, crops, diseases..."
+        maxlength="500">
+
+        <button id="chatbot-send" class="btn btn-primary">
+            <i class="fas fa-paper-plane"></i>
+        </button>
+
+    </div>
 				<div class="chatbot-typing" id="chatbot-typing" style="display: none;">
 					<div class="typing-indicator">
 						<span></span>
@@ -1128,7 +1139,68 @@
 			bottom: 15px;
 			right: 15px;
 		}
+
 	}
+	
+	
+	
+	.message-row{
+		display:flex;
+		align-items:flex-end;
+		margin-bottom:10px;
+	}
+	
+	.message-row.bot{
+		justify-content:flex-start;
+	}
+	
+	.message-row.user{
+		justify-content:flex-end;
+	}
+	
+	.message-bubble{
+		padding:10px 14px;
+		border-radius:15px;
+		max-width:70%;
+		font-size:14px;
+	}
+	
+	.message-row.bot .message-bubble{
+		background:#f1f1f1;
+		color:#333;
+	}
+	
+	.message-row.user .message-bubble{
+		background:#cfe9ff;
+		color:#000;
+	}
+	
+	.icon{
+		width:32px;
+		height:32px;
+		display:flex;
+		align-items:center;
+		justify-content:center;
+		margin:0 6px;
+		font-size:16px;
+		color:#555;
+	}
+	
+	
+	.speak-btn{
+	border:none;
+   background:transparent;
+   margin-top:5px;
+   cursor:pointer;
+   color:#28a745;
+	font-size:16px;
+}
+
+.speak-btn:hover{
+color:#155724;
+transform:scale(1.2);
+}
+	
 	</style>
 
 	<script>
@@ -1142,6 +1214,9 @@
 		const chatbotMessages = document.getElementById('chatbot-messages');
 		const chatbotTyping = document.getElementById('chatbot-typing');
 		const chatbotBadge = document.getElementById('chatbot-badge');
+
+		const chatbotVoice = document.getElementById('chatbot-voice');
+         let recognition;
 
 		let isOpen = false;
 
@@ -1205,28 +1280,46 @@
 			});
 		}
 
-		function addMessage(text, sender) {
-			const messageDiv = document.createElement('div');
-			messageDiv.className = `message ${sender}-message`;
+		function addMessage(message, sender) {
 
-			const avatar = document.createElement('div');
-			avatar.className = 'message-avatar';
-			avatar.innerHTML = sender === 'user' ? '<i class="fas fa-user"></i>' : '<i class="fas fa-robot"></i>';
+    const messageDiv = document.createElement("div");
+    messageDiv.className = "chatbot-message " + sender;
 
-			const content = document.createElement('div');
-			content.className = 'message-content';
+    let speakerButton = "";
 
-			const messageText = document.createElement('div');
-			messageText.className = 'message-text';
-			messageText.innerHTML = text.replace(/\n/g, '<br>');
+    // Add speaker button only for bot messages
+    if (sender === "bot") {
+        speakerButton = `
+        <button class="speak-btn" onclick="speakText('${message.replace(/'/g,"")}')" title="Play voice">
+            <i class="fas fa-volume-up"></i>
+        </button>
+        `;
+    }
 
-			content.appendChild(messageText);
-			messageDiv.appendChild(avatar);
-			messageDiv.appendChild(content);
+   messageDiv.innerHTML = `
+<div class="message-row ${sender}">
+    
+    ${sender === "bot" ? `
+    <div class="icon">
+        <i class="fas fa-robot"></i>
+    </div>` : ""}
 
-			chatbotMessages.appendChild(messageDiv);
-			chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
-		}
+    <div class="message-bubble">
+        <p>${message}</p>
+        ${speakerButton}
+    </div>
+
+    ${sender === "user" ? `
+    <div class="icon">
+        <i class="fas fa-user"></i>
+    </div>` : ""}
+
+</div>
+`;
+
+    chatbotMessages.appendChild(messageDiv);
+    chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
+}
 
 		function showTyping() {
 			chatbotTyping.style.display = 'flex';
@@ -1242,7 +1335,51 @@
 				chatbotBadge.style.display = 'block';
 			}
 		}, 30000); // Show every 30 seconds when closed
+		if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+
+			const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+			recognition = new SpeechRecognition();
+
+			recognition.lang = "en-US";
+			recognition.continuous = false;
+			recognition.interimResults = false;
+
+			chatbotVoice.addEventListener("click", () => {
+				recognition.start();
+				chatbotVoice.style.background = "#dc3545";
+			});
+
+			recognition.onresult = function(event) {
+				const transcript = event.results[0][0].transcript;
+				chatbotInput.value = transcript;
+				chatbotVoice.style.background = "";
+				sendMessage();
+			};
+
+			recognition.onend = function(){
+				chatbotVoice.style.background = "";
+			};
+
+		}
+
 	});
+
+function speakText(text){
+
+    const speech = new SpeechSynthesisUtterance();
+
+    speech.text = text;
+    speech.lang = "en-US";
+    speech.rate = 0.95;
+    speech.pitch = 1;
+
+    window.speechSynthesis.speak(speech);
+
+}
+
+
+
+
 	</script>
 </body>
 
