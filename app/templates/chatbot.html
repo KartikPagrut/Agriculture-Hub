@@ -71,6 +71,12 @@
 				<!-- Chat Input -->
 				<div class="chat-input-container">
 					<div class="input-group">
+						<button class="btn btn-outline-secondary" type="button" id="voiceInputBtn" onclick="toggleVoiceInput()" title="Start Voice Input">
+							<i class="fas fa-volume-up"></i>
+						</button>
+						<button class="btn btn-outline-secondary active" type="button" id="voiceOutputBtn" onclick="toggleVoiceOutput()" title="Toggle Voice Output (Auto Read)">
+							<i class="fas fa-volume-up"></i>
+						</button>
 						<input type="text" class="form-control form-control-modern" id="messageInput" 
 							   placeholder="Ask me about farming, crops, soil, diseases..." 
 							   onkeypress="handleKeyPress(event)">
@@ -299,6 +305,17 @@
 	box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 
+.voice-pulsing {
+	animation: pulse 1.5s infinite;
+	color: #dc3545;
+}
+
+@keyframes pulse {
+	0% { transform: scale(1); }
+	50% { transform: scale(1.3); }
+	100% { transform: scale(1); }
+}
+
 /* Scrollbar styling */
 .chat-container::-webkit-scrollbar {
 	width: 6px;
@@ -343,6 +360,9 @@ function sendMessage() {
 	.then(data => {
 		hideTypingIndicator();
 		addMessage(data.response, 'bot');
+		if (isVoiceOutputEnabled) {
+			speakText(data.response);
+		}
 	})
 	.catch(error => {
 		hideTypingIndicator();
@@ -351,12 +371,104 @@ function sendMessage() {
 	});
 }
 
+let isVoiceOutputEnabled = true;
+let recognition = null;
+
+function toggleVoiceOutput() {
+	isVoiceOutputEnabled = !isVoiceOutputEnabled;
+	const btn = document.getElementById('voiceOutputBtn');
+	if (isVoiceOutputEnabled) {
+		btn.innerHTML = '<i class="fas fa-volume-up"></i>';
+		btn.classList.add('active');
+	} else {
+		btn.innerHTML = '<i class="fas fa-volume-mute"></i>';
+		btn.classList.remove('active');
+		window.speechSynthesis.cancel();
+	}
+}
+
+function toggleVoiceInput() {
+	const voiceInputBtn = document.getElementById('voiceInputBtn');
+	
+	if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+		alert('Your browser does not support Speech Recognition. Please try Google Chrome.');
+		return;
+	}
+
+	if (!recognition) {
+		const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+		recognition = new SpeechRecognition();
+		recognition.continuous = false;
+		recognition.interimResults = false;
+		recognition.lang = 'en-US';
+
+		recognition.onstart = function() {
+			voiceInputBtn.querySelector('i').classList.add('voice-pulsing');
+		};
+
+		recognition.onresult = function(event) {
+			const transcript = event.results[0][0].transcript;
+			document.getElementById('messageInput').value = transcript;
+			sendMessage();
+		};
+
+		recognition.onerror = function(event) {
+			console.error('Speech recognition error', event.error);
+			voiceInputBtn.querySelector('i').classList.remove('voice-pulsing');
+		};
+
+		recognition.onend = function() {
+			voiceInputBtn.querySelector('i').classList.remove('voice-pulsing');
+		};
+	}
+
+	if (voiceInputBtn.querySelector('i').classList.contains('voice-pulsing')) {
+		recognition.stop();
+	} else {
+		recognition.start();
+	}
+}
+
+function speakText(text) {
+
+	if (!window.speechSynthesis) {
+		alert("Voice not supported in this browser");
+		return;
+	}
+
+	window.speechSynthesis.cancel();
+
+	// remove HTML tags
+	const temp = document.createElement("div");
+	temp.innerHTML = text;
+	const cleanText = temp.textContent || temp.innerText || "";
+
+	const speech = new SpeechSynthesisUtterance(cleanText);
+
+	speech.lang = "en-US";
+	speech.rate = 1;
+	speech.pitch = 1;
+	speech.volume = 1;
+
+	window.speechSynthesis.speak(speech);
+}
+
 function addMessage(message, sender) {
 	const chatMessages = document.getElementById('chatMessages');
 	const messageDiv = document.createElement('div');
 	const currentTime = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
 	
 	messageDiv.className = `message ${sender}-message`;
+	
+	let extraHtml = '';
+if (sender === 'bot') {
+	extraHtml = `
+	<button class="btn btn-sm btn-outline-primary ms-2 speak-btn" title="Play Voice">
+		<i class="fas fa-volume-up"></i>
+	</button>
+	`;
+}
+
 	messageDiv.innerHTML = `
 		<div class="message-avatar">
 			<i class="fas fa-${sender === 'user' ? 'user' : 'robot'}"></i>
@@ -365,9 +477,19 @@ function addMessage(message, sender) {
 			<div class="message-bubble">
 				<p class="mb-0">${message.replace(/\n/g, '<br>')}</p>
 			</div>
-			<small class="message-time">${currentTime}</small>
+			<div class="d-flex align-items-center mt-1">
+				<small class="message-time">${currentTime}</small>
+				${extraHtml}
+			</div>
 		</div>
 	`;
+	
+	if (sender === 'bot') {
+	const speakBtn = messageDiv.querySelector('.speak-btn');
+	if (speakBtn) {
+		speakBtn.addEventListener('click', () => speakText(message));
+	}
+}
 	
 	chatMessages.appendChild(messageDiv);
 	
