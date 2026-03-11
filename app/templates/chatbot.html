@@ -72,8 +72,8 @@
 				<div class="chat-input-container">
 					<div class="input-group">
 						<button class="btn btn-outline-secondary" type="button" id="voiceInputBtn" onclick="toggleVoiceInput()" title="Start Voice Input">
-							<i class="fas fa-volume-up"></i>
-						</button>
+                           <i class="fas fa-microphone"></i>
+                       </button>
 						<button class="btn btn-outline-secondary active" type="button" id="voiceOutputBtn" onclick="toggleVoiceOutput()" title="Toggle Voice Output (Auto Read)">
 							<i class="fas fa-volume-up"></i>
 						</button>
@@ -330,6 +330,20 @@
 	background: var(--primary-green);
 	border-radius: 3px;
 }
+
+		.speak-btn{
+border:none;
+background:transparent;
+margin-top:5px;
+cursor:pointer;
+color:#28a745;
+font-size:16px;
+}
+
+.speak-btn:hover{
+color:#155724;
+transform:scale(1.2);
+}
 </style>
 
 <script>
@@ -443,12 +457,19 @@ function speakText(text) {
 	temp.innerHTML = text;
 	const cleanText = temp.textContent || temp.innerText || "";
 
-	const speech = new SpeechSynthesisUtterance(cleanText);
+	const speech = new SpeechSynthesisUtterance();
 
-	speech.lang = "en-US";
-	speech.rate = 1;
-	speech.pitch = 1;
-	speech.volume = 1;
+speech.text = cleanText;
+speech.lang = "en-US";
+speech.rate = 0.95;
+speech.pitch = 1;
+speech.volume = 1;
+
+const voices = speechSynthesis.getVoices();
+if (voices.length > 0) {
+speech.voice = voices.find(v => v.lang === 'en-US') || voices[0];
+}
+
 
 	window.speechSynthesis.speak(speech);
 }
@@ -460,13 +481,13 @@ function addMessage(message, sender) {
 	
 	messageDiv.className = `message ${sender}-message`;
 	
-	let extraHtml = '';
+	   let speakButton = '';
 if (sender === 'bot') {
-	extraHtml = `
-	<button class="btn btn-sm btn-outline-primary ms-2 speak-btn" title="Play Voice">
-		<i class="fas fa-volume-up"></i>
-	</button>
-	`;
+speakButton = `
+<button class="speak-btn" title="Play Voice">
+<i class="fas fa-volume-up"></i>
+</button>
+`;
 }
 
 	messageDiv.innerHTML = `
@@ -479,7 +500,7 @@ if (sender === 'bot') {
 			</div>
 			<div class="d-flex align-items-center mt-1">
 				<small class="message-time">${currentTime}</small>
-				${extraHtml}
+				${speakButton}
 			</div>
 		</div>
 	`;
@@ -495,7 +516,10 @@ if (sender === 'bot') {
 	
 	// Scroll to bottom
 	const chatContainer = document.getElementById('chatContainer');
-	chatContainer.scrollTop = chatContainer.scrollHeight;
+	chatContainer.scrollTo({
+         top: chatContainer.scrollHeight,
+             behavior: "smooth"
+                          });
 }
 
 function showTypingIndicator() {
