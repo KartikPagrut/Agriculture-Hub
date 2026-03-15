@@ -189,6 +189,10 @@
 </div>
 
 <style>
+#chatbot-widget {
+	display: none !important;
+}
+
 .chat-container {
 	background: #f8f9fa;
 	border-radius: 15px;
@@ -375,6 +379,7 @@ function sendMessage() {
 		hideTypingIndicator();
 		addMessage(data.response, 'bot');
 		if (isVoiceOutputEnabled) {
+			window.speechSynthesis.cancel();
 			speakText(data.response);
 		}
 	})
@@ -433,14 +438,17 @@ function toggleVoiceInput() {
 
 		recognition.onend = function() {
 			voiceInputBtn.querySelector('i').classList.remove('voice-pulsing');
+			recognition.running = false;
 		};
 	}
 
-	if (voiceInputBtn.querySelector('i').classList.contains('voice-pulsing')) {
-		recognition.stop();
-	} else {
-		recognition.start();
-	}
+	if (recognition && recognition.running) {
+	recognition.stop();
+	recognition.running = false;
+} else {
+	recognition.start();
+	recognition.running = true;
+}
 }
 
 function speakText(text) {
@@ -457,22 +465,23 @@ function speakText(text) {
 	temp.innerHTML = text;
 	const cleanText = temp.textContent || temp.innerText || "";
 
-	const speech = new SpeechSynthesisUtterance();
+	const speech = new SpeechSynthesisUtterance(cleanText);
 
-speech.text = cleanText;
-speech.lang = "en-US";
-speech.rate = 0.95;
-speech.pitch = 1;
-speech.volume = 1;
+	speech.lang = "en-US";
+	speech.rate = 0.95;
+	speech.pitch = 1;
+	speech.volume = 1;
 
-const voices = speechSynthesis.getVoices();
-if (voices.length > 0) {
-speech.voice = voices.find(v => v.lang === 'en-US') || voices[0];
-}
-
+	const voices = speechSynthesis.getVoices();
+	if (voices.length > 0) {
+		speech.voice = voices.find(v => v.lang === 'en-US') || voices[0];
+	}
 
 	window.speechSynthesis.speak(speech);
 }
+
+
+
 
 function addMessage(message, sender) {
 	const chatMessages = document.getElementById('chatMessages');
