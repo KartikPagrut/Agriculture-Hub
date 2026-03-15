@@ -1236,6 +1236,7 @@ transform:scale(1.2);
 		// Close chatbot
 		chatbotClose.addEventListener('click', function() {
 			chatbotWindow.style.display = 'none';
+			window.speechSynthesis.pause()
 			isOpen = false;
 		});
 
@@ -1290,7 +1291,7 @@ transform:scale(1.2);
     // Add speaker button only for bot messages
     if (sender === "bot") {
         speakerButton = `
-        <button class="speak-btn" onclick="speakText('${message.replace(/'/g,"")}')" title="Play voice">
+        <button class="speak-btn" title="Play voice">
             <i class="fas fa-volume-up"></i>
         </button>
         `;
@@ -1305,7 +1306,7 @@ transform:scale(1.2);
     </div>` : ""}
 
     <div class="message-bubble">
-        <p>${message}</p>
+        <p>${message.replace(/\\n/g, '<br>')}</p>
         ${speakerButton}
     </div>
 
@@ -1318,6 +1319,14 @@ transform:scale(1.2);
 `;
 
     chatbotMessages.appendChild(messageDiv);
+    
+    if (sender === "bot") {
+        const speakBtn = messageDiv.querySelector('.speak-btn');
+        if (speakBtn) {
+            speakBtn.addEventListener('click', () => layoutSpeakText(message));
+        }
+    }
+
     chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
 }
 
@@ -1335,8 +1344,46 @@ transform:scale(1.2);
 				chatbotBadge.style.display = 'block';
 			}
 		}, 30000); // Show every 30 seconds when closed
-		if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+		
+	let layoutSpeech;
 
+	function layoutSpeakText(text){
+
+        // Resume if paused
+    if(window.speechSynthesis.paused){
+        window.speechSynthesis.resume();
+        return;
+    }
+
+    // Pause if currently speaking
+    if(window.speechSynthesis.speaking){
+        window.speechSynthesis.pause();
+        return;
+    }
+
+
+
+
+		window.speechSynthesis.cancel();
+		layoutSpeech = new SpeechSynthesisUtterance(text);
+
+		const voices = speechSynthesis.getVoices();
+		const englishVoice = voices.find(v => v.lang.startsWith("en"));
+
+		if(englishVoice){
+			layoutSpeech.voice = englishVoice;
+		}
+
+		layoutSpeech.lang = "en-US";
+		layoutSpeech.rate = 0.95;
+		layoutSpeech.pitch = 1;
+
+		window.speechSynthesis.speak(layoutSpeech);
+	}
+
+		let isListening = false;
+
+		if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
 			const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 			recognition = new SpeechRecognition();
 
@@ -1345,39 +1392,31 @@ transform:scale(1.2);
 			recognition.interimResults = false;
 
 			chatbotVoice.addEventListener("click", () => {
-				recognition.start();
-				chatbotVoice.style.background = "#dc3545";
+				if(!isListening){
+					recognition.start();
+					chatbotVoice.style.background = "#dc3545";
+					isListening = true;
+				}else{
+					recognition.stop();
+					chatbotVoice.style.background = "";
+					isListening = false;
+				}
 			});
 
-			recognition.onresult = function(event) {
+			recognition.onresult = function(event){
 				const transcript = event.results[0][0].transcript;
 				chatbotInput.value = transcript;
 				chatbotVoice.style.background = "";
+				isListening = false;
 				sendMessage();
 			};
 
 			recognition.onend = function(){
 				chatbotVoice.style.background = "";
+				isListening = false;
 			};
-
 		}
-
 	});
-
-function speakText(text){
-
-    const speech = new SpeechSynthesisUtterance();
-
-    speech.text = text;
-    speech.lang = "en-US";
-    speech.rate = 0.95;
-    speech.pitch = 1;
-
-    window.speechSynthesis.speak(speech);
-
-}
-
-
 
 
 	</script>
