@@ -6,14 +6,55 @@
 }
 </style>
 
+<div class="container py-5" style="margin-top:8rem;">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
 
-<div class="container py-2 mx-auto my-50 h-10 " style="margin: 12rem;">
-  <div class="row">
-      <div class="col-sm py-2 py-md-3">
-          <div class="card card-body" style="justify-content: center;">
-               <h1 class="text-center"><b>You should grow <i>{{ prediction }} </i>in your farm</b></h1>
+      <div class="card shadow-lg border-0 crop-card">
+        <div class="card-body text-center p-5">
+
+          <!-- Icon -->
+          <div class="mb-4">
+            <i class="fas fa-seedling" style="font-size:60px; color:#2e7d32;"></i>
           </div>
+
+          <!-- Title -->
+          <h2 class="mb-3" style="color:#1b5e20; font-weight:700;">
+            AI Crop Recommendation
+          </h2>
+
+          <!-- Result -->
+          <p class="crop-result">
+            🌾 You should grow <b>{{ prediction }}</b> in your farm
+          </p>
+
+        </div>
       </div>
+
+    </div>
   </div>
 </div>
+
+<style>
+.crop-card{
+    background: linear-gradient(135deg,#e8f5e9,#fffde7);
+    border-radius:20px;
+    transition:0.3s;
+}
+
+.crop-card:hover{
+    transform: translateY(-8px);
+    box-shadow:0 12px 30px rgba(0,0,0,0.2);
+}
+
+.crop-result{
+    font-size:26px;
+    color:#333;
+    font-weight:500;
+    background:#ffffff;
+    padding:18px 25px;
+    border-radius:12px;
+    display:inline-block;
+}
+</style>
 {% endblock %}
