@@ -2,13 +2,55 @@
 {% extends 'layout.html' %}
 
 {% block body %}
-<div class="container py-2 mx-auto my-50 h-10" style="margin: 9rem;">
-  <div class="row">
-      <div class="col-sm py-2 py-md-3">
-          <div class="card card-body" style="justify-content: center; background-color:blanchedalmond">
-            <p class="text-center" style="color: black; font-size: 22px;">{{ prediction }}</p>
+<div class="container py-5" style="margin-top:6rem;">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+
+      <div class="card shadow-lg border-0 prediction-card">
+        <div class="card-body text-center p-5">
+
+          <!-- Icon -->
+          <div class="mb-3">
+            <i class="fas fa-leaf" style="font-size:50px; color:#388e3c;"></i>
           </div>
+
+          <!-- Title -->
+          <h3 class="mb-3" style="color:#2e7d32; font-weight:600;">
+            Plant Disease Prediction
+          </h3>
+
+          <!-- Prediction Result -->
+          <p class="prediction-text">
+            {{ prediction }}
+          </p>
+
+        </div>
       </div>
+
+    </div>
   </div>
 </div>
+
+<style>
+.prediction-card{
+    background: linear-gradient(135deg,#e8f5e9,#f1f8e9);
+    border-radius:20px;
+    transition:0.3s;
+}
+
+.prediction-card:hover{
+    transform: translateY(-8px);
+    box-shadow:0 12px 30px rgba(0,0,0,0.2);
+}
+
+.prediction-text{
+    font-size:24px;
+    color:#333;
+    font-weight:500;
+    background:#ffffff;
+    padding:15px 20px;
+    border-radius:10px;
+    display:inline-block;
+}
+</style>
 {% endblock %}
